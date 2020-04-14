@@ -5,14 +5,17 @@ import pl.agh.edu.sr.lab3.ChannelFactory;
 import pl.agh.edu.sr.lab3.Order;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
 //TODO: sending messages to carrier or/and space
 
 public class Administrator {
     private final Channel channel;
+    private final Channel exchangeChannel;
     public final static String ADMIN_QUEUE_NAME = "ADMIN_QUEUE";
-    public final static String EXCHANGE_NAME = "ADMIN_QUEUE";
+    public final static String EXCHANGE_NAME = "ADMIN_EXE_QUEUE";
 
     public static void main(String []args) throws IOException, TimeoutException, InterruptedException {
         new Administrator().startListening();
@@ -20,12 +23,17 @@ public class Administrator {
 
     public Administrator() throws IOException, TimeoutException {
         this.channel = new ChannelFactory().getChannel();
+        this.exchangeChannel = new ChannelFactory().getChannel();
+        exchangeChannel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.TOPIC);
     }
 
     public void startListening() throws InterruptedException {
         Thread t1 = new Thread(this::initChannelAndStartListening);
+        Thread t2 = new Thread(this::messageSender);
         t1.start();
+        t2.start();
         t1.join();
+        t2.join();
     }
 
     private void initChannelAndStartListening() {
@@ -41,6 +49,47 @@ public class Administrator {
             channel.basicConsume(ADMIN_QUEUE_NAME, true, consumer);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    private void messageSender() {
+        System.out.println("Commands:\n" +
+                "SPACE <message body> - message to Space Agencies\n" +
+                "CARRIER <message body> - message to Carriers\n" +
+                "ALL <message body> - message to ALL\n" +
+                "QUIT - quit");
+
+        boolean run = true;
+        String key = "";
+        while(run){
+            System.out.print(">");
+            Scanner scanner = new Scanner(System.in).useDelimiter(" ");
+            String command = scanner.next();
+            String message = "";
+            if(scanner.hasNext())
+                message = scanner.nextLine();
+
+            switch(command){
+                case "SPACE":
+                    key = "agency.";
+                    break;
+                case "CARRIER":
+                    key= ".carrier";
+                    break;
+                case "ALL":
+                    key = "agency.carrier";
+                    break;
+                case "QUIT":
+                    run = false;
+                    break;
+                default:
+                    System.out.println("Wrong command");
+                    break;
+            }
+            try {
+                exchangeChannel.basicPublish(EXCHANGE_NAME, key, null, message.getBytes("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

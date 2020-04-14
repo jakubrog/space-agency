@@ -3,12 +3,12 @@ package pl.agh.edu.sr.lab3.carrier;
 import com.rabbitmq.client.*;
 import pl.agh.edu.sr.lab3.ChannelFactory;
 import pl.agh.edu.sr.lab3.Order;
-import pl.agh.edu.sr.lab3.administration.Administrator;
+import pl.agh.edu.sr.lab3.administration.AdministrativeQueueListener;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-
+// TODO: selecting services via input
 public class Carrier implements AutoCloseable{
     private final Channel channel;
     private final OrderType firstService;
@@ -26,7 +26,7 @@ public class Carrier implements AutoCloseable{
         channel = channelFactory.getChannel();
     }
 
-    public void start(){
+    public void start() throws IOException, TimeoutException {
         new Thread(()-> {
             try {
                 initChannelAndStartListening(firstService);
@@ -41,13 +41,7 @@ public class Carrier implements AutoCloseable{
                 e.printStackTrace();
             }
         }).start();
-        new Thread(()-> {
-            try {
-                administrativeQueueStartListening();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
+        new AdministrativeQueueListener().subscribeOn(ADMIN_QUEUE_KEY);
     }
 
     private void initChannelAndStartListening(OrderType orderType) throws IOException {
@@ -70,25 +64,6 @@ public class Carrier implements AutoCloseable{
         channel.basicQos(1);
         System.out.println("Ready for " + QUEUE_NAME + " orders");
         channel.basicConsume(QUEUE_NAME, false, consumer);
-    }
-
-    private void administrativeQueueStartListening() throws IOException {
-        channel.exchangeDeclare(Administrator.EXCHANGE_NAME, BuiltinExchangeType.TOPIC);
-        String queueName = channel.queueDeclare().getQueue();
-        channel.queueBind(queueName, Administrator.EXCHANGE_NAME, ADMIN_QUEUE_KEY);
-
-        Consumer consumer = new DefaultConsumer(channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                String message = new String(body, "UTF-8");
-                System.out.println("Received: " + message);
-                channel.basicAck(envelope.getDeliveryTag(), false);
-            }
-        };
-
-        // start listening
-        System.out.println("Waiting for admin messages...");
-        channel.basicConsume(queueName, false, consumer);
     }
 
     @Override
