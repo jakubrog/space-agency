@@ -6,17 +6,39 @@ import pl.agh.edu.sr.lab3.Order;
 import pl.agh.edu.sr.lab3.administration.AdministrativeQueueListener;
 
 import java.io.IOException;
+import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
-// TODO: selecting services via input
-public class Carrier implements AutoCloseable{
+public class Carrier {
+    // PROCESSING_TIME - how long does it take to process each order, in milliseconds
+    private final int PROCESSING_TIME = 1000;
     private final Channel channel;
     private final OrderType firstService;
     private final OrderType secondService;
     private static final String ADMIN_QUEUE_KEY = "*.carrier";
 
     public static void main(String []args) throws IOException, TimeoutException {
-        new Carrier(OrderType.CARGO, OrderType.PEOPLE).start();
+
+        System.out.print("Select two services:\nC - Cargo\nP - People\nS - Satellite\nWrite two letters without space," +
+                " in ex. CP - cargo and people\n> ");
+        String input = new Scanner(System.in).nextLine().trim();
+        while(input.length() != 2){
+            System.err.println("Wrong input, write two letters for two services, no more signs. Wrong input length.");
+            System.out.print("> ");
+            input = new Scanner(System.in).nextLine();
+        }
+
+        new Carrier(getService(input.charAt(0)), getService(input.charAt(1))).start();
+    }
+    private static OrderType getService(char input){
+        switch(input){
+            case 'P':
+                return OrderType.PEOPLE;
+            case 'S':
+                return OrderType.SATELLITE;
+            default:
+                return OrderType.CARGO;
+        }
     }
 
     public Carrier(OrderType firstService, OrderType secondService) throws IOException, TimeoutException {
@@ -54,7 +76,7 @@ public class Carrier implements AutoCloseable{
                 Order order = new Order(body);
                 System.out.println("Received order: " + order);
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(PROCESSING_TIME);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -64,12 +86,6 @@ public class Carrier implements AutoCloseable{
         channel.basicQos(1);
         System.out.println("Ready for " + QUEUE_NAME + " orders");
         channel.basicConsume(QUEUE_NAME, false, consumer);
-    }
-
-    @Override
-    public void close() throws Exception {
-        channel.getConnection().close();
-        channel.close();
     }
 
 }

@@ -41,10 +41,12 @@ public class Order {
     }
 
     public static OrderType getOrderType(String serviceType) {
-        switch(serviceType){
+        switch(serviceType.trim()){
             case "PEOPLE":
+            case "P":
                 return OrderType.PEOPLE;
             case "SATELLITE":
+            case "S":
                 return OrderType.SATELLITE;
             default:
                 return OrderType.CARGO;

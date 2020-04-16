@@ -20,7 +20,6 @@ public class OrderSender {
     public void send(Order order) throws IOException {
         channel.basicPublish("", ChannelFactory.getQueueName(order.getOrderType()), null, order.getBytes());
         channel.basicPublish("", Administrator.ADMIN_QUEUE_NAME, null, order.getBytes());
-        System.out.println("Order has been send");
     }
 
     public void close() throws Exception {

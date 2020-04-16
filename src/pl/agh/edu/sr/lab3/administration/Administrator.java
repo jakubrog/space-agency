@@ -5,11 +5,9 @@ import pl.agh.edu.sr.lab3.ChannelFactory;
 import pl.agh.edu.sr.lab3.Order;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 import java.util.concurrent.TimeoutException;
 
-//TODO: sending messages to carrier or/and space
 
 public class Administrator {
     private final Channel channel;
@@ -53,10 +51,10 @@ public class Administrator {
     }
     private void messageSender() {
         System.out.println("Commands:\n" +
-                "SPACE <message body> - message to Space Agencies\n" +
-                "CARRIER <message body> - message to Carriers\n" +
-                "ALL <message body> - message to ALL\n" +
-                "QUIT - quit");
+                "S <message body> - message to Space Agencies\n" +
+                "C <message body> - message to Carriers\n" +
+                "A <message body> - message to ALL\n" +
+                "Q - quit");
 
         boolean run = true;
         String key = "";
@@ -69,16 +67,16 @@ public class Administrator {
                 message = scanner.nextLine();
 
             switch(command){
-                case "SPACE":
+                case "S":
                     key = "agency.";
                     break;
-                case "CARRIER":
+                case "C":
                     key= ".carrier";
                     break;
-                case "ALL":
+                case "A":
                     key = "agency.carrier";
                     break;
-                case "QUIT":
+                case "Q":
                     run = false;
                     break;
                 default:
@@ -92,7 +90,5 @@ public class Administrator {
             }
         }
     }
-
-
 }
 

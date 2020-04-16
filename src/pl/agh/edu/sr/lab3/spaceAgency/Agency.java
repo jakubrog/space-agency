@@ -34,14 +34,15 @@ public class Agency implements Runnable{
             e.printStackTrace();
         }
 
-        System.out.println("Commands:\nPEOPLE <orderID>\nSATELLITE <orderID>\nCARGO <orderID>\nquit\nAgency is running\n");
+        System.out.println("Commands:\nP <orderID> - People order\nS <orderID> - Satellite order\n" +
+                "C <orderID> - Cargo order\nquit() - quit\n\n");
 
         while (true) {
             System.out.print("order> ");
             input = new Scanner(System.in);
-            String command = input.nextLine();
+            String command = input.nextLine().trim();
 
-            if (command.equals("quit")) {
+            if (command.equals("quit()")) {
                 break;
             }
 
